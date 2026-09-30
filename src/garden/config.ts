@@ -15,7 +15,7 @@ export const TOTAL_GROWTH = GROWTH_STAGES.reduce((a, s) => a + s.duration, 0);
 export function growthAt(seconds: number) {
   let acc = 0;
   for (let i = 0; i < GROWTH_STAGES.length; i++) {
-    const s = GROWTH_STAGES[i];
+    const s = GROWTH_STAGES[i]!;
     if (seconds < acc + s.duration) {
       return {
         stage: s.id as GrowthStageId,

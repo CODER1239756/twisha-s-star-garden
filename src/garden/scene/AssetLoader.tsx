@@ -1,3 +1,4 @@
+import type { ThreeElements } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { Component, Suspense, useMemo, type ReactNode } from "react";
 import * as THREE from "three";
@@ -25,14 +26,14 @@ export class AssetBoundary extends Component<
   { name: string; fallback?: ReactNode; children: ReactNode },
   { failed: boolean }
 > {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
-  componentDidCatch(e: unknown) {
+  override componentDidCatch(e: unknown) {
     console.warn(`[garden] asset "${this.props.name}" failed to load`, e);
   }
-  render() {
+  override render() {
     return this.state.failed ? (this.props.fallback ?? null) : this.props.children;
   }
 }
@@ -84,7 +85,7 @@ export function Model({
   url,
   height,
   ...props
-}: { url: string; height: number } & JSX.IntrinsicElements["group"]) {
+}: { url: string; height: number } & ThreeElements["group"]) {
   const obj = useNormalizedModel(url, height);
   return (
     <group {...props}>

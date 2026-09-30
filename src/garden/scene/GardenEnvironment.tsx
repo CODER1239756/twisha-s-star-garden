@@ -24,8 +24,8 @@ export function GardenGround() {
     }
     const g = new THREE.ShapeGeometry(shape, 24);
     // uv in world units for the soil texture
-    const pos = g.attributes.position;
-    const uv = g.attributes.uv;
+    const pos = g.attributes["position"]!;
+    const uv = g.attributes["uv"]!;
     for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / 3, pos.getY(i) / 3);
     return g;
   }, []);
@@ -57,7 +57,7 @@ export function GardenGround() {
   const stoneRef = useRef<THREE.InstancedMesh>(null);
   const stoneGeo = useMemo(() => {
     const g = new THREE.DodecahedronGeometry(1, 1);
-    const p = g.attributes.position;
+    const p = g.attributes["position"]!;
     for (let i = 0; i < p.count; i++) {
       const f = 1 + (Math.sin(p.getX(i) * 5.1) * Math.cos(p.getZ(i) * 4.3)) * 0.08;
       p.setXYZ(i, p.getX(i) * f, p.getY(i) * f, p.getZ(i) * f);
@@ -169,7 +169,7 @@ export function Grass({ count, light }: { count: number; light: number }) {
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(0.045, 0.32, 1, 4);
     g.translate(0, 0.16, 0);
-    const p = g.attributes.position;
+    const p = g.attributes["position"]!;
     for (let i = 0; i < p.count; i++) {
       const t = p.getY(i) / 0.32;
       p.setX(i, p.getX(i) * (1 - t * 0.9));
@@ -216,8 +216,8 @@ export function Grass({ count, light }: { count: number; light: number }) {
   }, [count]);
 
   useFrame((state) => {
-    mat.uniforms.uTime.value = state.clock.elapsedTime;
-    mat.uniforms.uLight.value += (light - mat.uniforms.uLight.value) * 0.05;
+    mat.uniforms["uTime"]!.value = state.clock.elapsedTime;
+    mat.uniforms["uLight"]!.value += (light - mat.uniforms["uLight"]!.value) * 0.05;
   });
 
   return <instancedMesh ref={ref} args={[geo, mat, count]} frustumCulled={false} />;

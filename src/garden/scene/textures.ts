@@ -14,7 +14,7 @@ function noiseCanvas(size: number, paint: (ctx: CanvasRenderingContext2D, s: num
 
 function speckle(ctx: CanvasRenderingContext2D, s: number, colors: string[], n: number, rMax: number) {
   for (let i = 0; i < n; i++) {
-    ctx.fillStyle = colors[(Math.random() * colors.length) | 0];
+    ctx.fillStyle = colors[(Math.random() * colors.length) | 0]!;
     ctx.globalAlpha = 0.25 + Math.random() * 0.5;
     const r = Math.random() * rMax + 0.5;
     ctx.beginPath();
