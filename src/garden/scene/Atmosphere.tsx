@@ -26,7 +26,7 @@ export function Fireflies({ count, strength }: { count: number; strength: number
       positions[i * 3 + 1] = s.y + Math.sin(t * s.s * 1.7 + s.p) * 0.25;
       positions[i * 3 + 2] = s.z + Math.cos(t * s.s * 0.9 + s.p) * 0.8;
     });
-    if (ref.current) ref.current.geometry.attributes.position.needsUpdate = true;
+    if (ref.current) ref.current.geometry.attributes["position"]!.needsUpdate = true;
     if (mat.current) {
       const blink = 0.6 + Math.sin(t * 2.1) * 0.4;
       mat.current.opacity += (strength * blink - mat.current.opacity) * 0.05;
@@ -68,10 +68,10 @@ export function Motes({ count, opacity }: { count: number; opacity: number }) {
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = base[i * 3] + Math.sin(t * 0.2 + i) * 0.4 + ((t * 0.05) % 1);
-      pos[i * 3 + 1] = base[i * 3 + 1] + Math.sin(t * 0.3 + i * 1.3) * 0.2;
+      pos[i * 3] = base[i * 3]! + Math.sin(t * 0.2 + i) * 0.4 + ((t * 0.05) % 1);
+      pos[i * 3 + 1] = base[i * 3 + 1]! + Math.sin(t * 0.3 + i * 1.3) * 0.2;
     }
-    if (ref.current) ref.current.geometry.attributes.position.needsUpdate = true;
+    if (ref.current) ref.current.geometry.attributes["position"]!.needsUpdate = true;
   });
   return (
     <points ref={ref} frustumCulled={false}>
@@ -104,12 +104,12 @@ export function Rain({ count, active }: { count: number; active: boolean }) {
     if (mat.current) mat.current.opacity += ((active ? 0.35 : 0) - mat.current.opacity) * 0.04;
     if (!ref.current || (mat.current && mat.current.opacity < 0.01)) return;
     for (let i = 0; i < count; i++) {
-      let y = positions[i * 6 + 1] - speeds[i] * dt;
+      let y = positions[i * 6 + 1]! - speeds[i] * dt;
       if (y < 0) y += 9;
       positions[i * 6 + 1] = y;
       positions[i * 6 + 4] = y - 0.22;
     }
-    ref.current.geometry.attributes.position.needsUpdate = true;
+    ref.current.geometry.attributes["position"]!.needsUpdate = true;
   });
   return (
     <lineSegments ref={ref} frustumCulled={false}>
