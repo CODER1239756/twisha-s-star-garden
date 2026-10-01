@@ -90,7 +90,7 @@ function PlantedThought({ t }: { t: Thought }) {
       onPointerOut={() => (document.body.style.cursor = "")}
     >
       <mesh ref={mound} material={soilMat} position-y={0.005} scale={[1, 0.3, 1]} receiveShadow>
-        <sphereGeometry args={[0.13, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[0.08, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
       </mesh>
       <mesh ref={seed} material={seedMat}>
         <sphereGeometry args={[0.025, 10, 8]} />

@@ -178,7 +178,7 @@ export function GardenOverlay() {
   if (!entered) return null;
   return (
     <div className="pointer-events-none fixed inset-0 z-10">
-      <div className="absolute left-5 top-5">
+      <div className="glass absolute left-4 top-4 rounded-2xl px-4 py-2">
         <p className="font-serif text-2xl text-foreground drop-shadow-sm">Twisha's Garden</p>
         <p className="text-xs text-muted-foreground">{count === 0 ? "nothing planted yet" : `${count} thought${count > 1 ? "s" : ""} growing`}</p>
       </div>
