@@ -104,7 +104,7 @@ export function Rain({ count, active }: { count: number; active: boolean }) {
     if (mat.current) mat.current.opacity += ((active ? 0.35 : 0) - mat.current.opacity) * 0.04;
     if (!ref.current || (mat.current && mat.current.opacity < 0.01)) return;
     for (let i = 0; i < count; i++) {
-      let y = positions[i * 6 + 1]! - speeds[i] * dt;
+      let y = positions[i * 6 + 1]! - speeds[i]! * dt;
       if (y < 0) y += 9;
       positions[i * 6 + 1] = y;
       positions[i * 6 + 4] = y - 0.22;
