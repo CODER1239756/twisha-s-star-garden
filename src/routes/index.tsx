@@ -1,24 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { GardenCanvas } from "@/garden/GardenCanvas";
+import { useGarden } from "@/garden/store";
+import { EntryScreen, GardenOverlay } from "@/garden/ui/GardenUI";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Twisha's Garden — plant a thought, watch it bloom" },
+      { name: "description", content: "A cinematic little garden where every thought you write becomes a living flower." },
+      { property: "og:title", content: "Twisha's Garden" },
+      { property: "og:description", content: "Plant a thought and watch it grow from seed to bloom." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Garden,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Garden() {
+  const hydrated = useGarden((s) => s.hydrated);
+  const hydrate = useGarden((s) => s.hydrate);
+  useEffect(() => {
+    if (!hydrated) hydrate();
+  }, [hydrated, hydrate]);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="fixed inset-0 overflow-hidden bg-background">
+      {hydrated && <GardenCanvas />}
+      <GardenOverlay />
+      <EntryScreen />
+    </main>
   );
 }
