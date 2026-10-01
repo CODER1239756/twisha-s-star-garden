@@ -29,7 +29,7 @@ function PlantedThought({ t }: { t: Thought }) {
   const complete = useGarden((s) => s.completePlant);
   const mound = useRef<THREE.Mesh>(null);
   const seed = useRef<THREE.Mesh>(null);
-  const stem = useRef<THREE.Mesh>(null);
+  const stem = useRef<THREE.Group>(null);
   const leaves = useRef<THREE.Group>(null);
   const bloom = useRef<THREE.Group>(null);
   const halo = useRef<THREE.Sprite>(null);
@@ -95,10 +95,11 @@ function PlantedThought({ t }: { t: Thought }) {
       <mesh ref={seed} material={seedMat}>
         <sphereGeometry args={[0.025, 10, 8]} />
       </mesh>
-      <mesh ref={stem} material={stemMat} castShadow>
-        <cylinderGeometry args={[0.008, 0.012, 1, 6]} />
-        {/* pivot at base */}
-      </mesh>
+      <group ref={stem}>
+        <mesh material={stemMat} position-y={0.5} castShadow>
+          <cylinderGeometry args={[0.008, 0.012, 1, 6]} />
+        </mesh>
+      </group>
       <group ref={leaves}>
         {[0, 1, 2, 3].map((k) => (
           <mesh
@@ -122,8 +123,6 @@ function PlantedThought({ t }: { t: Thought }) {
   );
 }
 
-// Stem cylinder is centered; shift so it grows from the soil.
-LEAF.translate(0, 0, 0);
 
 export function Plants() {
   const thoughts = useGarden((s) => s.thoughts);
@@ -132,17 +131,12 @@ export function Plants() {
       {thoughts
         .filter((t) => t.plantedAt !== null)
         .map((t) => (
-          <StemFix key={t.id}>
-            <PlantedThought t={t} />
-          </StemFix>
+          <PlantedThought key={t.id} t={t} />
         ))}
     </>
   );
 }
 
-function StemFix({ children }: { children: React.ReactNode }) {
-  return <group>{children}</group>;
-}
 
 /** Glowing node that leaves the glass input and arcs into the soil. */
 function FlyingNode({ f }: { f: Flight }) {
