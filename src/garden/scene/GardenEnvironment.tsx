@@ -9,6 +9,34 @@ export function GardenGround() {
   const lawn = useMemo(() => lawnTexture(), []);
   const soil = useMemo(() => soilTexture(), []);
   const stone = useMemo(() => stoneTexture(), []);
+  const edge = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const g = c.getContext("2d")!;
+    const r = g.createRadialGradient(64, 64, 10, 64, 64, 64);
+    r.addColorStop(0, "#fff");
+    r.addColorStop(0.55, "#bbb");
+    r.addColorStop(1, "#000");
+    g.fillStyle = r;
+    g.fillRect(0, 0, 128, 128);
+    // break up the rim so it never reads as a circle
+    for (let i = 0; i < 260; i++) {
+      g.fillStyle = `rgba(0,0,0,${Math.random() * 0.5})`;
+      const a = Math.random() * Math.PI * 2, d = 34 + Math.random() * 30;
+      g.beginPath();
+      g.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 2 + Math.random() * 6, 0, 7);
+      g.fill();
+    }
+    return new THREE.CanvasTexture(c);
+  }, []);
+  const pathPatches = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, i) => {
+        const z = 5.5 - i * 1.2;
+        return { x: pathX(z), z, s: 0.9 + Math.random() * 0.5, r: Math.random() };
+      }),
+    [],
+  );
 
   const bedGeo = useMemo(() => {
     const { bed } = LAYOUT;
@@ -31,14 +59,27 @@ export function GardenGround() {
   }, []);
 
   const stones = useMemo(() => {
-    const out: { p: [number, number, number]; s: [number, number, number]; r: number }[] = [];
-    for (let z = 6; z > -5; z -= 0.72) {
-      const zz = z + (Math.random() - 0.5) * 0.15;
+    const out: { p: [number, number, number]; s: [number, number, number]; r: number; t?: number }[] = [];
+    // irregular spacing, slight sinking/tilt, occasional small side stone
+    for (let z = 6; z > -5; ) {
+      const zz = z + (Math.random() - 0.5) * 0.12;
+      const big = Math.random() > 0.25;
       out.push({
-        p: [pathX(zz) + (Math.random() - 0.5) * 0.15, 0.02, zz],
-        s: [0.34 + Math.random() * 0.1, 0.06, 0.26 + Math.random() * 0.08],
+        p: [pathX(zz) + (Math.random() - 0.5) * 0.22, 0.004 + Math.random() * 0.02, zz],
+        s: big
+          ? [0.3 + Math.random() * 0.14, 0.045 + Math.random() * 0.03, 0.22 + Math.random() * 0.1]
+          : [0.18 + Math.random() * 0.06, 0.04, 0.15 + Math.random() * 0.05],
         r: Math.random() * Math.PI,
+        t: (Math.random() - 0.5) * 0.08,
       });
+      if (Math.random() < 0.18)
+        out.push({
+          p: [pathX(zz) + (Math.random() > 0.5 ? 0.42 : -0.42), 0.0, zz + 0.2],
+          s: [0.09, 0.03, 0.08],
+          r: Math.random() * Math.PI,
+          t: 0.1,
+        });
+      z -= big ? 0.62 + Math.random() * 0.22 : 0.45;
     }
     // rocks
     const rocks: [number, number, number, number][] = [
@@ -74,7 +115,7 @@ export function GardenGround() {
       stones.forEach((s, i) => {
         o.position.set(...s.p);
         o.scale.set(...s.s);
-        o.rotation.set(0, s.r, 0);
+        o.rotation.set(s.t ?? 0, s.r, (s.t ?? 0) * 0.7);
         o.updateMatrix();
         m.setMatrixAt(i, o.matrix);
       });
@@ -96,6 +137,23 @@ export function GardenGround() {
       >
         <meshStandardMaterial map={soil} roughness={0.95} color="#d8cbbd" />
       </mesh>
+      {/* soft, worn transition from soil into lawn */}
+      <mesh
+        rotation-x={-Math.PI / 2}
+        position={[LAYOUT.bed.x, 0.006, LAYOUT.bed.z]}
+        scale={[LAYOUT.bed.rx * 2.9, LAYOUT.bed.rz * 2.9, 1]}
+        receiveShadow
+      >
+        <planeGeometry args={[1, 1]} />
+        <meshStandardMaterial map={soil} alphaMap={edge} transparent depthWrite={false} roughness={1} color="#a89a86" />
+      </mesh>
+      {/* worn earth along the path */}
+      {pathPatches.map((pp, i) => (
+        <mesh key={i} rotation-x={-Math.PI / 2} rotation-z={pp.r} position={[pp.x, 0.004, pp.z]} scale={[pp.s, pp.s * 1.6, 1]}>
+          <planeGeometry args={[1, 1]} />
+          <meshStandardMaterial map={soil} alphaMap={edge} transparent depthWrite={false} opacity={0.55} roughness={1} color="#b6a993" />
+        </mesh>
+      ))}
       <instancedMesh
         ref={stoneRef}
         args={[stoneGeo, undefined, stones.length]}
