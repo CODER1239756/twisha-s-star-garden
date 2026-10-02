@@ -7,7 +7,7 @@ import { Fireflies, Motes, Rain } from "./scene/Atmosphere";
 import { EnvironmentController } from "./scene/EnvironmentController";
 import { GardenGround, Grass } from "./scene/GardenEnvironment";
 import { Flights, Plants } from "./scene/Plants";
-import { Bench, Lanterns, Shrubs, Trees } from "./scene/Vegetation";
+import { BackdropVegetation, Bench, Lanterns, Shrubs, Trees } from "./scene/Vegetation";
 import { CameraRig } from "./scene/CameraRig";
 
 export function GardenCanvas() {
@@ -20,16 +20,17 @@ export function GardenCanvas() {
     <Canvas
       shadows
       dpr={q.dpr}
-      camera={{ position: [0.4, 3.4, 8.6], fov: 42 }}
+      camera={{ position: [0.4, 6.5, 14], fov: 42 }}
       gl={{ antialias: quality !== "mobile", toneMapping: THREE.ACESFilmicToneMapping }}
       onPointerMissed={() => select(null)}
-      className="!fixed inset-0"
+      className="!fixed inset-0 touch-none"
     >
       <EnvironmentController />
       <Suspense fallback={null}>
         <GardenGround />
         <Grass count={q.grass} light={p.grassLight} />
         <Trees />
+        <BackdropVegetation count={quality === "mobile" ? 3 : quality === "balanced" ? 6 : 8} />
         <Shrubs />
         <Bench />
         <Lanterns intensity={p.lantern} />

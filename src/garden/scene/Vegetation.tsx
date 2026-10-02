@@ -123,3 +123,38 @@ function Lantern({ x, z, intensity, phase }: { x: number; z: number; intensity: 
     </group>
   );
 }
+
+/** Distant trees and hedging that dissolve into the fog, giving the garden depth. */
+const FAR_TREES = [
+  { x: -10, z: -11, h: 7, r: 0.4 }, { x: -3.5, z: -14, h: 8, r: 1.9 }, { x: 4.5, z: -13, h: 7.5, r: 3.1 },
+  { x: 10.5, z: -9.5, h: 6.5, r: 5.2 }, { x: -12, z: -4, h: 6, r: 2.4 }, { x: 12.5, z: -2.5, h: 6.8, r: 0.9 },
+  { x: 8, z: -16, h: 9, r: 4.4 }, { x: -8, z: -17, h: 8.5, r: 1.1 },
+];
+const MID_SHRUBS = [
+  { x: -6.8, z: -6.5, h: 1.6 }, { x: 6.9, z: -6.2, h: 1.5 }, { x: -1.8, z: -7.5, h: 1.3 },
+  { x: 7.5, z: -1.5, h: 1.2 }, { x: -7.4, z: -1.2, h: 1.4 }, { x: 3.2, z: -8.2, h: 1.7 },
+];
+export function BackdropVegetation({ count }: { count: number }) {
+  return (
+    <>
+      {FAR_TREES.slice(0, count).map((t, i) => (
+        <SafeAsset key={i} name="tree_small_02 (backdrop)">
+          <group position={[t.x, 0, t.z]} rotation-y={t.r}>
+            <Swaying amount={0.008} speed={0.35} phase={i * 1.3}>
+              <Model url={ASSETS.tree} height={t.h} />
+            </Swaying>
+          </group>
+        </SafeAsset>
+      ))}
+      {MID_SHRUBS.slice(0, Math.ceil(count * 0.75)).map((s, i) => (
+        <SafeAsset key={`m${i}`} name="shrub_01 (midground)">
+          <group position={[s.x, 0, s.z]} rotation-y={i * 1.7}>
+            <Swaying amount={0.02} speed={0.7} phase={i}>
+              <Model url={i % 2 ? ASSETS.shrub_03 : ASSETS.shrub_01} height={s.h} />
+            </Swaying>
+          </group>
+        </SafeAsset>
+      ))}
+    </>
+  );
+}
