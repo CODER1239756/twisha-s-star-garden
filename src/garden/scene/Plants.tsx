@@ -41,7 +41,7 @@ function PlantedThought({ t }: { t: Thought }) {
     const i = g.index;
     const L = reduced ? (g.local > 0.5 ? 1 : g.local * 2) : g.local;
     const p = (k: number) => (i > k ? 1 : i === k ? ease(L) : 0);
-    if (mound.current) mound.current.scale.setScalar(0.4 + p(0) * 0.6);
+    if (mound.current) mound.current.scale.setScalar((0.4 + p(0) * 0.6) * (1 - p(4) * 0.6));
     if (seed.current) {
       seed.current.visible = i < 2;
       seed.current.position.y = 0.04 - p(0) * 0.03;
@@ -49,8 +49,10 @@ function PlantedThought({ t }: { t: Thought }) {
     }
     const stemH = 0.05 + p(1) * 0.08 + p(2) * 0.25;
     if (stem.current) {
-      stem.current.visible = i >= 1;
-      stem.current.scale.set(1, stemH, 1);
+      // the sapling hands over to the real flower as it blooms
+      const fade = 1 - p(4);
+      stem.current.visible = i >= 1 && fade > 0.02;
+      stem.current.scale.set(fade, stemH * Math.max(0.001, fade), fade);
     }
     if (leaves.current) {
       leaves.current.visible = i >= 1;
@@ -113,7 +115,7 @@ function PlantedThought({ t }: { t: Thought }) {
       </group>
       <group ref={bloom} visible={false}>
         <SafeAsset name="flower_gazania">
-          <Model url={ASSETS.gazania} height={0.42} />
+          <Model url={ASSETS.gazania} height={0.6} />
         </SafeAsset>
       </group>
       <sprite ref={halo} scale={[0.45, 0.45, 0.45]}>

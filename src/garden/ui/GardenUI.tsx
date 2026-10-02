@@ -60,20 +60,33 @@ export function EntryScreen() {
 
 function ThoughtInput() {
   const [text, setText] = useState("");
+  const [detaching, setDetaching] = useState<string | null>(null);
   const plant = useGarden((s) => s.plantThought);
   const ref = useRef<HTMLTextAreaElement>(null);
   const submit = () => {
     const v = text.trim();
-    if (!v || !ref.current) return;
+    if (!v || !ref.current || detaching) return;
     const r = ref.current.getBoundingClientRect();
     const nx = ((r.left + r.width / 2) / window.innerWidth) * 2 - 1;
-    const ny = -(((r.top + r.height / 2) / window.innerHeight) * 2 - 1);
-    plant(v, [nx, ny]);
-    gardenAudio.chime();
+    // the node rises a little above the glass before entering the world
+    const ny = -(((r.top - 40) / window.innerHeight) * 2 - 1);
+    setDetaching(v);
     setText("");
+    gardenAudio.chime();
+    const reduced = useGarden.getState().settings.reducedMotion;
+    setTimeout(() => {
+      plant(v, [nx, ny]);
+      setDetaching(null);
+    }, reduced ? 150 : 900);
   };
   return (
-    <div className="pointer-events-auto glass mx-auto w-full max-w-md rounded-3xl px-5 py-3">
+    <div className="pointer-events-auto glass relative mx-auto w-full max-w-md rounded-3xl px-5 py-3">
+      {detaching && (
+        <div aria-hidden className="thought-detach pointer-events-none absolute inset-x-5 top-3 flex items-center justify-center">
+          <span className="thought-detach-text truncate font-serif text-lg text-foreground">{detaching}</span>
+          <span className="thought-detach-node absolute h-3 w-3 rounded-full bg-glow" />
+        </div>
+      )}
       <textarea
         ref={ref}
         value={text}
@@ -86,7 +99,7 @@ function ThoughtInput() {
             submit();
           }
         }}
-        placeholder="Write a thought, press Enter to plant it…"
+        placeholder={detaching ? "" : "Write a thought, press Enter to plant it…"}
         aria-label="Write a thought and press Enter to plant it"
         className="w-full resize-none bg-transparent font-serif text-lg text-foreground outline-none placeholder:italic placeholder:text-muted-foreground"
       />

@@ -160,3 +160,13 @@
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .sprig path { stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw 2.4s ease forwards; }
 @media (prefers-reduced-motion: reduce) { .sprig path { animation: none; stroke-dashoffset: 0; } }
+/* thought detaching from the glass: text gathers into a glowing node that lifts away */
+@keyframes detach-text { 0% { opacity: 1; filter: blur(0); transform: scale(1); letter-spacing: 0; }
+  100% { opacity: 0; filter: blur(6px); transform: scale(0.2); letter-spacing: -0.4em; } }
+@keyframes detach-node { 0% { opacity: 0; transform: translateY(0) scale(0.2); }
+  45% { opacity: 1; transform: translateY(0) scale(1.4); }
+  100% { opacity: 1; transform: translateY(-52px) scale(1); } }
+.thought-detach-text { animation: detach-text 0.55s ease-in forwards; }
+.thought-detach-node { box-shadow: 0 0 14px 6px var(--glow), 0 0 40px 14px color-mix(in oklch, var(--glow) 50%, transparent);
+  animation: detach-node 0.9s cubic-bezier(.4,0,.2,1) forwards; }
+@media (prefers-reduced-motion: reduce) { .thought-detach-text, .thought-detach-node { animation-duration: 0.15s; } }
