@@ -1,3 +1,4 @@
+import { Trail } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -33,7 +34,9 @@ function PlantedThought({ t }: { t: Thought }) {
   const leaves = useRef<THREE.Group>(null);
   const bloom = useRef<THREE.Group>(null);
   const halo = useRef<THREE.Sprite>(null);
+  const glow = useRef<THREE.PointLight>(null);
   const done = useRef(t.completed);
+  const selected = useGarden((s) => s.selectedId === t.id);
 
   useFrame(({ clock }) => {
     const sec = t.completed ? TOTAL_GROWTH : (Date.now() - (t.plantedAt ?? Date.now())) / 1000;
@@ -66,12 +69,23 @@ function PlantedThought({ t }: { t: Thought }) {
     if (bloom.current) {
       const b = p(4);
       bloom.current.visible = b > 0;
-      bloom.current.scale.setScalar(Math.max(0.001, b) * t.scale);
+      // gentle overshoot so the flower "settles" as it opens
+      const settle = i === 4 && !t.completed ? 1 + Math.sin(Math.min(1, L * 1.4) * Math.PI) * 0.08 : 1;
+      const lift = selected ? 1.08 : 1;
+      bloom.current.scale.setScalar(Math.max(0.001, b) * t.scale * settle * lift);
     }
     if (halo.current) {
       const m = halo.current.material as THREE.SpriteMaterial;
       const pulse = i === 4 && !t.completed ? Math.sin(L * Math.PI) : 0;
-      m.opacity = 0.15 + pulse * 0.6 + (i === 0 ? 0.35 : 0);
+      const sel = selected ? 0.35 + Math.sin(clock.elapsedTime * 2) * 0.08 : 0;
+      m.opacity = (i === 4 ? 0.05 : 0.15) + pulse * 0.55 + (i === 0 ? 0.35 : 0) + sel;
+      if (glow.current) {
+        // landing flash, bloom light, selection light — then back to natural
+        const land = i === 0 ? Math.max(0, 1 - L * 3) * 2.2 : 0;
+        const target = land + pulse * 0.9 + (selected ? 0.8 : 0);
+        glow.current.intensity += (target - glow.current.intensity) * 0.15;
+        glow.current.position.y = i === 4 ? 0.35 : 0.12;
+      }
       halo.current.position.y = i === 0 ? 0.08 : stemH + 0.1;
     }
     if (g.progress >= 1 && !done.current) {
@@ -118,6 +132,7 @@ function PlantedThought({ t }: { t: Thought }) {
           <Model url={ASSETS.gazania} height={0.6} />
         </SafeAsset>
       </group>
+      <pointLight ref={glow} color={GROWTH_COLORS.node} intensity={0} distance={1.6} decay={1.8} />
       <sprite ref={halo} scale={[0.45, 0.45, 0.45]}>
         <spriteMaterial map={glowTexture()} transparent depthWrite={false} blending={THREE.AdditiveBlending} color={GROWTH_COLORS.nodeHalo} opacity={0} />
       </sprite>
@@ -153,19 +168,28 @@ function FlyingNode({ f }: { f: Flight }) {
     const dir = start.clone().sub(camera.position).normalize();
     start.copy(camera.position).add(dir.multiplyScalar(2.5));
     const end = new THREE.Vector3(...(thought?.plantPosition ?? [0, 0, 0]));
-    const mid = start.clone().lerp(end, 0.5);
-    mid.y += 1.6;
-    return new THREE.QuadraticBezierCurve3(start, mid, end.clone().setY(0.03));
+    const c1 = start.clone().lerp(end, 0.3);
+    c1.y += 1.9;
+    const c2 = end.clone();
+    c2.y = 0.9; // approach from above so the final descent is gentle
+    return new THREE.CubicBezierCurve3(start, c1, c2, end.clone().setY(0.03));
   }, [camera, f.ndc, thought?.plantPosition]);
-  const DUR = reduced ? 0.8 : 2.4;
+  const PAUSE = reduced ? 0 : 0.35;
+  const DUR = reduced ? 0.8 : 3.2;
 
   useFrame(({ clock }) => {
-    const t = Math.min(1, (performance.now() - f.startedAt) / 1000 / DUR);
-    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const el = (performance.now() - f.startedAt) / 1000;
+    const t = Math.min(1, Math.max(0, el - PAUSE) / DUR);
+    // smootherstep: soft departure, long natural slow-down into the soil
+    const e = t * t * t * (t * (t * 6 - 15) + 10);
     if (g.current) {
       g.current.position.copy(curve.getPoint(e));
-      const s = 1 - Math.max(0, (t - 0.85) / 0.15) * 0.7;
-      g.current.scale.setScalar(s * (1 + Math.sin(clock.elapsedTime * 10) * 0.06));
+      // tiny breathing wobble while hovering + organic drift in flight
+      g.current.position.x += Math.sin(clock.elapsedTime * 3.1) * 0.015 * (1 - t);
+      g.current.position.y += Math.sin(clock.elapsedTime * 2.3) * 0.02 * (1 - t);
+      const appear = Math.min(1, el / 0.25);
+      const s = appear * (1 - Math.max(0, (t - 0.88) / 0.12) * 0.8);
+      g.current.scale.setScalar(Math.max(0.001, s) * (1 + Math.sin(clock.elapsedTime * 6) * 0.05));
     }
     if (t >= 1 && !landed.current) {
       landed.current = true;
@@ -175,10 +199,19 @@ function FlyingNode({ f }: { f: Flight }) {
 
   return (
     <group ref={g}>
-      <mesh>
-        <sphereGeometry args={[0.05, 16, 12]} />
-        <meshBasicMaterial color={GROWTH_COLORS.node} toneMapped={false} />
-      </mesh>
+      {reduced ? (
+        <mesh>
+          <sphereGeometry args={[0.04, 16, 12]} />
+          <meshBasicMaterial color={GROWTH_COLORS.node} toneMapped={false} />
+        </mesh>
+      ) : (
+        <Trail width={0.35} length={2.2} decay={2.5} color={GROWTH_COLORS.nodeHalo} attenuation={(w) => w * w}>
+          <mesh>
+            <icosahedronGeometry args={[0.04, 2]} />
+            <meshBasicMaterial color={GROWTH_COLORS.node} toneMapped={false} />
+          </mesh>
+        </Trail>
+      )}
       <sprite scale={[0.7, 0.7, 0.7]}>
         <spriteMaterial map={glowTexture()} transparent depthWrite={false} blending={THREE.AdditiveBlending} color={GROWTH_COLORS.nodeHalo} />
       </sprite>
