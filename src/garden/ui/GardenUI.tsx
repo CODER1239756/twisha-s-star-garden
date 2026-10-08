@@ -1,5 +1,7 @@
 import { useProgress } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
+import { Send, Settings2, Volume2, VolumeX } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { gardenAudio } from "../audio";
 import type { QualityLevel, TimeOfDay } from "../config";
 import { useGarden } from "../store";
@@ -29,22 +31,24 @@ export function EntryScreen() {
       style={{ backgroundImage: "radial-gradient(ellipse at 50% 30%, var(--color-secondary) 0%, transparent 60%)" }}
     >
       <Sprig className="mb-6 h-28 w-20" />
-      <h1 className="font-serif text-5xl font-medium tracking-tight text-foreground sm:text-7xl">Twisha's Garden</h1>
+      <h1 className="font-serif text-5xl font-medium uppercase text-foreground sm:text-7xl">Twisha</h1>
       <p className="mt-4 max-w-sm font-serif text-lg italic text-muted-foreground">
-        Every thought you leave here grows into something living.
+        a little place for the things that grow
       </p>
-      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">for Twisha · with love</p>
+      <p className="mt-3 font-serif text-sm text-muted-foreground">05.11</p>
       <div className="mt-10 h-14">
         {ready ? (
-          <button
+          <Button
+            type="button"
             onClick={() => {
               setLeaving(true);
               setTimeout(enter, 1000);
             }}
-            className="glass rounded-full px-10 py-3 font-serif text-lg text-foreground transition hover:scale-105"
+            variant="ghost"
+            className="glass h-auto rounded-full px-10 py-3 font-serif text-lg text-foreground transition hover:scale-105"
           >
-            Enter the garden
-          </button>
+            ENTER THE GARDEN
+          </Button>
         ) : (
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm text-muted-foreground">Preparing a little world…</p>
@@ -63,6 +67,7 @@ function ThoughtInput() {
   const [detaching, setDetaching] = useState<string | null>(null);
   const plant = useGarden((s) => s.plantThought);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const canSubmit = text.trim().length > 0 && !detaching;
   const submit = () => {
     const v = text.trim();
     if (!v || !ref.current || detaching) return;
@@ -80,7 +85,7 @@ function ThoughtInput() {
     }, reduced ? 150 : 900);
   };
   return (
-    <div className="pointer-events-auto glass relative mx-auto w-full max-w-md rounded-3xl px-5 py-3">
+    <div className="pointer-events-auto glass relative mx-auto flex w-full max-w-lg items-end gap-2 rounded-3xl px-5 py-3 transition-shadow focus-within:ring-2 focus-within:ring-primary/40 focus-within:shadow-lg">
       {detaching && (
         <div aria-hidden className="thought-detach pointer-events-none absolute inset-x-5 top-3 flex items-center justify-center">
           <span className="thought-detach-text truncate font-serif text-lg text-foreground">{detaching}</span>
@@ -99,10 +104,22 @@ function ThoughtInput() {
             submit();
           }
         }}
-        placeholder={detaching ? "" : "Write a thought, press Enter to plant it…"}
+        placeholder={detaching ? "" : "Feed the plant with your imagination..."}
         aria-label="Write a thought and press Enter to plant it"
-        className="w-full resize-none bg-transparent font-serif text-lg text-foreground outline-none placeholder:italic placeholder:text-muted-foreground"
+        className="min-h-8 max-h-32 w-full resize-none bg-transparent py-1 font-serif text-lg text-foreground outline-none placeholder:italic placeholder:text-muted-foreground"
       />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Plant thought"
+        title="Plant thought"
+        disabled={!canSubmit}
+        onClick={submit}
+        className="mb-0.5 shrink-0 rounded-full text-primary"
+      >
+        <Send aria-hidden="true" />
+      </Button>
     </div>
   );
 }
@@ -117,17 +134,17 @@ function ThoughtCard() {
       <p className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">
         planted {new Date(t.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long" })}
       </p>
-      <button onClick={() => select(null)} className="mt-4 text-sm text-primary underline-offset-4 hover:underline">
+        <Button variant="link" onClick={() => select(null)} className="mt-4 h-auto p-0 text-sm">
         close
-      </button>
+        </Button>
     </div>
   );
 }
 
 const Chip = ({ on, children, onClick }: { on: boolean; children: React.ReactNode; onClick: () => void }) => (
-  <button onClick={onClick} className={`rounded-full px-3 py-1 text-sm capitalize transition ${on ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"}`}>
+  <Button variant={on ? "default" : "ghost"} onClick={onClick} className="h-8 rounded-full px-3 text-sm capitalize">
     {children}
-  </button>
+  </Button>
 );
 
 function Settings() {
@@ -138,19 +155,22 @@ function Settings() {
   return (
     <div className="pointer-events-auto absolute right-4 top-4 flex flex-col items-end gap-2">
       <div className="flex gap-2">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           aria-label={s.audio ? "Mute sound" : "Play sound"}
+          title={s.audio ? "Mute sound" : "Play sound"}
           onClick={() => {
             gardenAudio.setEnabled(!s.audio);
             update({ audio: !s.audio });
           }}
-          className="glass h-10 rounded-full px-4 text-sm text-foreground"
+          className="glass rounded-full text-foreground"
         >
-          {s.audio ? "sound on" : "sound off"}
-        </button>
-        <button onClick={() => setOpen((o) => !o)} className="glass h-10 rounded-full px-4 text-sm text-foreground" aria-expanded={open}>
-          {open ? "close" : "settings"}
-        </button>
+          {s.audio ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => setOpen((o) => !o)} className="glass rounded-full text-foreground" aria-expanded={open} aria-label={open ? "Close garden settings" : "Open garden settings"} title="Garden settings">
+          <Settings2 aria-hidden="true" />
+        </Button>
       </div>
       {open && (
         <div className="glass w-72 space-y-4 rounded-3xl p-5">
@@ -188,12 +208,14 @@ const Group = ({ label, children }: { label: string; children: React.ReactNode }
 export function GardenOverlay() {
   const entered = useGarden((s) => s.entered);
   const count = useGarden((s) => s.thoughts.length);
+  const selected = useGarden((s) => s.selectedId !== null);
   if (!entered) return null;
   return (
     <div className="pointer-events-none fixed inset-0 z-10">
-      <div className="glass absolute left-4 top-4 rounded-2xl px-4 py-2">
-        <p className="font-serif text-2xl text-foreground drop-shadow-sm">Twisha's Garden</p>
-        <p className="text-xs text-muted-foreground">{count === 0 ? "nothing planted yet" : `${count} thought${count > 1 ? "s" : ""} growing`}</p>
+      <div aria-hidden="true" className={`absolute inset-0 bg-foreground/20 transition-opacity duration-700 ${selected ? "opacity-100" : "opacity-0"}`} />
+      <div className="absolute left-4 top-4 rounded-full border border-border/50 bg-background/20 px-4 py-2 backdrop-blur-sm">
+        <p className="font-serif text-xl text-foreground drop-shadow-sm">Twisha's Garden</p>
+        <p className="text-xs text-muted-foreground">{count === 0 ? "a quiet little garden" : `${count} thought${count > 1 ? "s" : ""} growing`}</p>
       </div>
       <Settings />
       <ThoughtCard />
