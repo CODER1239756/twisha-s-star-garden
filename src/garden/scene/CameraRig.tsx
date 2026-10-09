@@ -13,12 +13,32 @@ const goal = new THREE.Vector3();
 export function CameraRig() {
   const controls = useRef<OrbitImpl>(null);
   const reduced = useGarden((s) => s.settings.reducedMotion);
+  const entered = useGarden((s) => s.entered);
+  const introDone = useGarden((s) => s.introDone);
+  const finishIntro = useGarden((s) => s.finishIntro);
   const selected = useGarden((s) => s.thoughts.find((t) => t.id === s.selectedId));
   const flying = useGarden((s) => s.flights.length > 0);
+  const introElapsed = useRef(0);
+  const introStarted = useRef(false);
+  const introFrom = useRef(new THREE.Vector3(0.4, 6.5, 14));
+  const introTo = useRef(new THREE.Vector3(0.4, 3.4, 8.6));
 
   useFrame((state, raw) => {
     const c = controls.current;
     if (!c) return;
+    if (entered && !introDone) {
+      introStarted.current = true;
+      introElapsed.current += raw;
+      const duration = reduced ? 0.45 : 3.4;
+      const progress = Math.min(1, introElapsed.current / duration);
+      const eased = progress * progress * (3 - 2 * progress);
+      state.camera.position.lerpVectors(introFrom.current, introTo.current, eased);
+      c.target.copy(HOME);
+      c.update();
+      if (progress >= 1) finishIntro();
+      return;
+    }
+    if (!entered) return;
     const k = 1 - Math.exp(-(reduced ? 8 : 2.5) * Math.min(raw, 0.05));
     if (selected) {
       goal.set(selected.plantPosition[0], 0.25, selected.plantPosition[2]);
@@ -48,7 +68,7 @@ export function CameraRig() {
       minAzimuthAngle={-0.9}
       maxAzimuthAngle={0.9}
       rotateSpeed={0.5}
-      autoRotate={!reduced && !selected && !flying}
+      autoRotate={entered && introDone && !reduced && !selected && !flying}
       autoRotateSpeed={0.15}
     />
   );
